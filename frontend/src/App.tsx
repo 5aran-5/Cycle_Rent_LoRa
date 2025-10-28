@@ -4,6 +4,10 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Dashboard from "./pages/Dashboard.js";
+import Bicycles from "./pages/Bicycles.js";
+
+
 
 function Logout() {
   localStorage.clear();
@@ -15,9 +19,6 @@ function RegisterAndLogout() {
   return <Register />;
 }
 
-function AdminPage() {
-  return <h1>Welcome Admin Dashboard</h1>;
-}
 
 function Unauthorized() {
   return <h1>403 - Unauthorized Access</h1>;
@@ -44,7 +45,7 @@ function App() {
           path="/admin"
           element={
             <ProtectedRoute requireAdmin={true}>
-              <AdminPage />
+              <Bicycles/>
             </ProtectedRoute>
           }
         />

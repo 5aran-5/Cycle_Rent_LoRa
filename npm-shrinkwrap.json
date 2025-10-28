@@ -1,0 +1,10 @@
+{
+  "name": "CYCLE_RENT_LoRa",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "name": "CYCLE_RENT_LoRa"
+    }
+  }
+}

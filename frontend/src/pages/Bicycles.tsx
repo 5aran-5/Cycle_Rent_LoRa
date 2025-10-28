@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, MoreVertical, Edit, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Check,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -21,10 +29,23 @@ import {
 import { toast } from "sonner";
 import api from "@/api";
 
+interface Bicycle {
+  id: number;
+  device_id: string;
+  status: "available" | "reserved" | "in_use" | "offline";
+  latitude: number | null;
+  longitude: number | null;
+  last_update: string | null;
+}
+
 export default function Bicycles() {
   const [search, setSearch] = useState("");
-  const [bicycles, setBicycles] = useState([]);
+  // const [bicycles, setBicycles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingBikeId, setEditingBikeId] = useState(null);
+  // const [editData, setEditData] = useState({});
+  const [bicycles, setBicycles] = useState<Bicycle[]>([]);
+  const [editData, setEditData] = useState<Partial<Bicycle>>({});
 
   // Fetch all bicycles
   useEffect(() => {
@@ -50,7 +71,7 @@ export default function Bicycles() {
       bike.status.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Delete bicycle handler
+  // Delete bicycle
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this bicycle?"))
       return;
@@ -63,27 +84,48 @@ export default function Bicycles() {
     }
   };
 
-  // Edit bicycle (example: status toggle)
-  const handleEdit = async (id, currentStatus) => {
-    const bikeToEdit = bicycles.find((b) => b.id === id);
-    const newStatus =
-      currentStatus === "available"
-        ? "offline"
-        : currentStatus === "offline"
-        ? "in_use"
-        : "available";
+  // Start editing
+  const startEditing = (bike) => {
+    setEditingBikeId(bike.id);
+    setEditData({ ...bike });
+  };
 
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingBikeId(null);
+    setEditData({});
+  };
+
+  // Handle input changes during editing
+  const handleInputChange = (field, value) => {
+    setEditData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Save edited bicycle
+  const handleSave = async (id: number) => {
     try {
-      await api.put(`/api/bicycles/${id}/`, {
-        ...bikeToEdit, // include all existing fields
-        status: newStatus, // update only status
-      });
-      toast.success(`Bicycle status updated to ${newStatus}`);
+      // If your API returns the updated bicycle, use it:
+      const res = await api.put<Bicycle>(`/api/bicycles/${id}/`, editData);
+      const updatedBike = res.data;
+
+      toast.success("Bicycle updated successfully");
+
       setBicycles((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
+        prev.map((b) => (b.id === id ? updatedBike : b))
       );
+
+      // If your API DOES NOT return the updated object, uncomment the fallback below:
+      /*
+      setBicycles((prev) =>
+        prev.map((b) =>
+          b.id === id ? ({ ...b, ...(editData as Partial<Bicycle>) }) : b
+        )
+      );
+      */
+
+      setEditingBikeId(null);
     } catch (error) {
-      console.error("Edit failed:", error.response?.data || error);
+      console.error("Save failed:", (error as any).response?.data || error);
       toast.error("Failed to update bicycle");
     }
   };
@@ -129,7 +171,8 @@ export default function Bicycles() {
               <TableRow className="bg-background/30">
                 <TableHead>Device ID</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
+                <TableHead>Latitude</TableHead>
+                <TableHead>Longitude</TableHead>
                 <TableHead>Last Update</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -139,48 +182,127 @@ export default function Bicycles() {
                 filteredBicycles.map((bike) => (
                   <TableRow key={bike.id} className="hover:bg-background/20">
                     <TableCell className="font-medium">
-                      {bike.device_id}
+                      {editingBikeId === bike.id ? (
+                        <Input
+                          value={editData.device_id}
+                          onChange={(e) =>
+                            handleInputChange("device_id", e.target.value)
+                          }
+                        />
+                      ) : (
+                        bike.device_id
+                      )}
                     </TableCell>
+
                     <TableCell>
-                      <StatusBadge status={bike.status} />
+                      {editingBikeId === bike.id ? (
+                        <Input
+                          value={editData.status}
+                          onChange={(e) =>
+                            handleInputChange("status", e.target.value)
+                          }
+                        />
+                      ) : (
+                        <StatusBadge status={bike.status} />
+                      )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {bike.latitude?.toFixed(4)}, {bike.longitude?.toFixed(4)}
+
+                    <TableCell>
+                      {editingBikeId === bike.id ? (
+                        <Input
+                          value={editData.latitude}
+                          onChange={(e) =>
+                            handleInputChange("latitude", e.target.value)
+                          }
+                        />
+                      ) : (
+                        bike.latitude?.toFixed(4)
+                      )}
                     </TableCell>
+
+                    <TableCell>
+                      {editingBikeId === bike.id ? (
+                        <Input
+                          value={editData.longitude}
+                          onChange={(e) =>
+                            handleInputChange("longitude", e.target.value)
+                          }
+                        />
+                      ) : (
+                        bike.longitude?.toFixed(4)
+                      )}
+                    </TableCell>
+
                     <TableCell className="text-muted-foreground">
                       {bike.last_update
                         ? new Date(bike.last_update).toLocaleString()
                         : "N/A"}
                     </TableCell>
+
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="w-4 h-4" />
+                      {editingBikeId === bike.id ? (
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="icon"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => handleSave(bike.id)}
+                          >
+                            <Check className="w-4 h-4" />
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(bike.id, bike.status)}
+
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={cancelEditing}
                           >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDelete(bike.id)}
+                            <X className="w-4 h-4" />
+                          </Button>
+
+                          {/* <Button
+                            size="icon"
+                            variant="success"
+                            onClick={() => handleSave(bike.id)}
                           >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={cancelEditing}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button> */}
+                        </div>
+                      ) : (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => startEditing(bike)}
+                            >
+                              <Edit className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDelete(bike.id)}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
+                  <TableCell colSpan={6} className="text-center py-4">
                     No bicycles found
                   </TableCell>
                 </TableRow>

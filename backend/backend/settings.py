@@ -6,7 +6,8 @@ import os
 import dj_database_url
 
 
-load_dotenv
+# Load environment variables from .env (locally only)
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -114,7 +115,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default='postgresql://postgres:password@localhost:5432/dbname',
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=os.environ.get("RENDER", False)  # SSL only on Render
     )
 }
 
@@ -163,7 +164,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWS_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",

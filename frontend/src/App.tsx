@@ -15,7 +15,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DashboardLayout from "./pages/DashboardLayout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Bicycles from "./pages/Bicycles.jsx";
-// import Users from "./pages/Users.jsx";
+import Users from "./pages/Users.jsx";
 // import Tracking from "./pages/Tracking.jsx";
 // import Logs from "./pages/Logs.jsx";
 // import Settings from "./pages/Settings.jsx";
@@ -70,8 +70,8 @@ function App() {
             >
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/bicycles" element={<Bicycles />} />
-              {/* <Route path="/users" element={<Users />} />
-              <Route path="/tracking" element={<Tracking />} />
+              <Route path="/users" element={<Users />} />
+              {/*<Route path="/tracking" element={<Tracking />} />
               <Route path="/logs" element={<Logs />} />
               <Route path="/settings" element={<Settings />} /> */}
             </Route>

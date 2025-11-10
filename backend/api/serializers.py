@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.utils import timezone
 
 # 1️⃣ User registration
-class UserSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'password']
@@ -59,18 +59,50 @@ class RentalLogSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'bicycle', 'start_time', 'end_time', 'duration_minutes', 'distance_km', 'status']
 
 
-# 6️⃣ User Profile serializer (for admin management of RFID)
+# 6️⃣ User Profile serializer
 class UserProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
-
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'rfid_tag', 'registered_date']
-        
-        
-# -----------------------------
-# Dashboard / Recent Rental Serializer
-# -----------------------------
+        fields = ['rfid_tag', 'registered_date']
+
+
+# 7️⃣ User serializer (Admin CRUD)
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(source='userprofile', required=False)
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'password', 'profile']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        profile_data = validated_data.pop('userprofile', {})
+        password = validated_data.pop('password', None)
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+
+        rfid_tag = profile_data.get('rfid_tag', None)
+        UserProfile.objects.update_or_create(user=user, defaults={'rfid_tag': rfid_tag})
+        return user
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('userprofile', {})
+        password = validated_data.pop('password', None)
+        instance.username = validated_data.get('username', instance.username)
+        if password:
+            instance.set_password(password)
+        instance.save()
+
+        profile = instance.userprofile
+        if profile_data:
+            rfid_tag = profile_data.get('rfid_tag', profile.rfid_tag)
+            profile.rfid_tag = rfid_tag
+            profile.save()
+        return instance
+
+
+# 8️⃣ Dashboard Recent Rental Serializer
 class DashboardRecentRentalSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     userName = serializers.CharField(source='user.username')
@@ -80,11 +112,6 @@ class DashboardRecentRentalSerializer(serializers.Serializer):
     duration = serializers.SerializerMethodField()
 
     def get_duration(self, obj):
-        """
-        Prefer duration_minutes if stored; otherwise compute from start_time to end_time (or now if ongoing)
-        Return as "HH:MM:SS" string to match your example
-        """
-        # If model has duration_minutes stored, use it
         if getattr(obj, 'duration_minutes', None):
             mins = float(obj.duration_minutes)
             seconds = int(mins * 60)

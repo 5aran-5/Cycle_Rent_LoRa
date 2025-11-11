@@ -9,6 +9,13 @@ class Command(BaseCommand):
     help = "Add dummy data including users, bicycles, and rental logs."
 
     def handle(self, *args, **options):
+        # --- Check if bicycles already exist ---
+        if Bicycle.objects.exists():
+            self.stdout.write(self.style.WARNING(
+                "⚠️  Bicycles already exist in the database. Aborting dummy data creation."
+            ))
+            return  # Stop execution early
+
         # --- User Data ---
         user_data = [
             {"username": "john_doe", "email": "john@example.com", "rfid": "RFID-JOHN-001"},
@@ -73,18 +80,15 @@ class Command(BaseCommand):
 
         for i in range(1, 8):
             device_id = f"BIKE{i:03}"
-            if not Bicycle.objects.filter(device_id=device_id).exists():
-                lat = CENTER_LAT + random.uniform(-0.0015, 0.0015)
-                lon = CENTER_LON + random.uniform(-0.0015, 0.0015)
-                Bicycle.objects.create(
-                    device_id=device_id,
-                    status=bike_statuses[i - 1],
-                    latitude=lat,
-                    longitude=lon
-                )
-                self.stdout.write(self.style.SUCCESS(f"✅ Created {device_id} ({bike_statuses[i-1]}) at ({lat:.6f}, {lon:.6f})"))
-            else:
-                self.stdout.write(self.style.WARNING(f"⚠️ {device_id} already exists."))
+            lat = CENTER_LAT + random.uniform(-0.0015, 0.0015)
+            lon = CENTER_LON + random.uniform(-0.0015, 0.0015)
+            Bicycle.objects.create(
+                device_id=device_id,
+                status=bike_statuses[i - 1],
+                latitude=lat,
+                longitude=lon
+            )
+            self.stdout.write(self.style.SUCCESS(f"✅ Created {device_id} ({bike_statuses[i-1]}) at ({lat:.6f}, {lon:.6f})"))
 
         # --- Create Rental Logs ---
         self.stdout.write("\n📜 Creating rental logs...")

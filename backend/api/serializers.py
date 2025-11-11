@@ -51,19 +51,33 @@ class ReservationSerializer(serializers.ModelSerializer):
 
 # 5️⃣ Rental Log serializer
 class RentalLogSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.SerializerMethodField()
     bicycle = BicycleSerializer(read_only=True)
 
     class Meta:
         model = RentalLog
-        fields = ['id', 'user', 'bicycle', 'start_time', 'end_time', 'duration_minutes', 'distance_km', 'status']
+        fields = [
+            'id', 'user', 'bicycle', 'start_time', 'end_time',
+            'duration_minutes', 'distance_km', 'status'
+        ]
+
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "username": obj.user.username,
+            "email": obj.user.email
+        }
 
 
 # 6️⃣ User Profile serializer
 class UserProfileSerializer(serializers.ModelSerializer):
+    rfid_tag = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    registered_date = serializers.DateTimeField(read_only=True)
+
     class Meta:
         model = UserProfile
         fields = ['rfid_tag', 'registered_date']
+
 
 
 # 7️⃣ User serializer (Admin CRUD)
@@ -76,10 +90,11 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        profile_data = validated_data.pop('userprofile', {})
+        profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
         user = User(**validated_data)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
         user.save()
 
         rfid_tag = profile_data.get('rfid_tag', None)
@@ -87,8 +102,9 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        profile_data = validated_data.pop('userprofile', {})
+        profile_data = validated_data.pop('profile', {})
         password = validated_data.pop('password', None)
+
         instance.username = validated_data.get('username', instance.username)
         if password:
             instance.set_password(password)
@@ -99,7 +115,10 @@ class UserSerializer(serializers.ModelSerializer):
             rfid_tag = profile_data.get('rfid_tag', profile.rfid_tag)
             profile.rfid_tag = rfid_tag
             profile.save()
+
         return instance
+
+
 
 
 # 8️⃣ Dashboard Recent Rental Serializer

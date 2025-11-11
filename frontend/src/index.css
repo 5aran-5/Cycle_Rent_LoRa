@@ -66,3 +66,30 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-in-out;
+}
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+/* Fix for mobile bottom nav being stuck at top */
+nav[role="navigation"],
+nav.fixed {
+  position: fixed !important;
+  bottom: 0 !important;
+  top: auto !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+}

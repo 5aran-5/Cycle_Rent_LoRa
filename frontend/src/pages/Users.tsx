@@ -84,7 +84,11 @@ export default function Users() {
     }
 
     try {
-      const res = await api.post("/api/users/", { username, password, rfid_tag });
+      const res = await api.post("/api/users/", {
+        username,
+        password,
+        rfid_tag,
+      });
       setUsers((prev) => [...prev, res.data]);
       toast.success(`User '${username}' created successfully`);
     } catch (error) {
@@ -126,11 +130,10 @@ export default function Users() {
     try {
       const payload = {
         username: editData.username,
-        password: undefined, // password not edited inline
-        rfid_tag: editData.profile?.rfid_tag,
+        profile: { rfid_tag: editData.profile?.rfid_tag }, // 👈 nest it properly
       };
 
-      const res = await api.put(`/api/users/${id}/`, payload);
+      const res = await api.patch(`/api/users/${id}/`, payload);
       const updatedUser = res.data;
 
       setUsers((prev) => prev.map((u) => (u.id === id ? updatedUser : u)));

@@ -1,0 +1,6 @@
+.vscode/
+.qodo/
+*.qodo-backup
+*.qodo-temp
+.venv/
+__pycache__/

@@ -160,3 +160,13 @@
     font-size: 0.9rem;
   }
 }
+
+.smartbi-input-box input {
+  color: #111827; /* dark text for visibility */
+  background: #f9fafb;
+  caret-color: #2563eb; /* optional: blue caret */
+}
+
+.smartbi-input-box input::placeholder {
+  color: #9ca3af; /* gray placeholder */
+}

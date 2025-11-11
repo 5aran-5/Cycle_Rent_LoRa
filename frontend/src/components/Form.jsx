@@ -64,7 +64,7 @@ function Form({ route, method }) {
             Sign In
           </Link>
           <Link
-            to="/register"
+            to="/"
             className={`smartbi-tab ${method === "register" ? "active" : ""}`}
           >
             Register

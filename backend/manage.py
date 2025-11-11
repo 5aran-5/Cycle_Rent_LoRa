@@ -2,13 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-import django
 
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -17,22 +15,6 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-
-    # ✅ Initialize Django before accessing models
-    django.setup()
-
-    # ✅ Now it's safe to use ORM and models
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
-    password = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
-    email = os.environ.get("DJANGO_SUPERUSER_EMAIL")
-
-    if username and password and not User.objects.filter(username=username).exists():
-        User.objects.create_superuser(username=username, email=email, password=password)
-        print(f"Superuser {username} created successfully!")
-
     execute_from_command_line(sys.argv)
 
 

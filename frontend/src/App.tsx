@@ -53,7 +53,7 @@ function App() {
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
-            <Route path="/register" element={<RegisterAndLogout />} />
+            <Route path="/" element={<RegisterAndLogout />} />
 
             {/* Protected normal user route */}
             <Route

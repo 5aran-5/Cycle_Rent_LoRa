@@ -35,15 +35,48 @@ class EnthuTechWebhookView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        # 1️⃣ Verify Token
         token = request.headers.get("Authorization")  # Expect: Bearer <token>
         if token != f"Bearer {WEBHOOK_TOKEN}":
             return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
         data = request.data
-        print("Received Webhook Data:", data)  # Log or inspect data temporarily
+        print("Received Webhook Data:", data)
 
-        # For now, just acknowledge
-        return Response({"status": "success", "message": "Data received"}, status=status.HTTP_200_OK)
+        # 2️⃣ Extract required fields
+        device_id = data.get("deviceID")
+        payload = data.get("payload", {})
+
+        if not device_id:
+            return Response({"error": "Missing deviceID"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3️⃣ Extract latitude & longitude from payload
+        latitude = payload.get("latitude")
+        longitude = payload.get("longitude")
+
+        if latitude is None or longitude is None:
+            return Response({"error": "Payload must include 'latitude' and 'longitude'"},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # 4️⃣ Update the matching bicycle
+        try:
+            bicycle = Bicycle.objects.get(device_id=device_id)
+        except Bicycle.DoesNotExist:
+            return Response({"error": f"No bicycle found with device_id {device_id}"},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        bicycle.latitude = latitude
+        bicycle.longitude = longitude
+        bicycle.save()
+
+        print(f"Updated {device_id}: lat={latitude}, lon={longitude}")
+
+        # 5️⃣ Always return 200 OK for successful processing
+        return Response(
+            {"status": "success", "message": "Location updated"},
+            status=status.HTTP_200_OK
+        )
+
 
 # -------------------------------
 # Authentication & Role Views

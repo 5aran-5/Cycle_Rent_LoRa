@@ -28,7 +28,7 @@ import os
 
 # WEBHOOK INTEGRATION VIEW
 # WEBHOOK_TOKEN = "enthutech_secret_12345"
-WEBHOOK_TOKEN = os.environ.get("WEBHOOK_TOKEN", "enthutech_secret_12345")
+WEBHOOK_TOKEN = os.environ.get("WEBHOOK_TOKEN", "Pj8cXx1aXH4aU4F0gE4g1SxGmLw6v0Yn_BYr7E8pP3A")
 
 class EnthuTechWebhookView(APIView):
     authentication_classes = []
